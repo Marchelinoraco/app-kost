@@ -229,9 +229,6 @@ export function CardDemo() {
                   <CardDescription className="mb-2">
                     Tempat nyaman dan aman
                   </CardDescription>
-                  <CardAction>
-                    <Button variant="link">Detail</Button>
-                  </CardAction>
                 </CardHeader>
 
                 <div className="flex flex-col items-center gap-2">
@@ -262,10 +259,6 @@ export function CardDemo() {
                       onClick={() => handleSuka(kost.nama)}
                     >
                       {liked ? "❤️ Disukai" : "🤍 Suka"}
-                    </Button>
-
-                    <Button variant="outline" className="text-sm px-4">
-                      Lihat
                     </Button>
                   </div>
                 </div>
