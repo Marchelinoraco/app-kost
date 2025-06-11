@@ -1,3 +1,5 @@
+import { AppSidebar } from "@/components/app-sidebar";
+import { CardDemo } from "@/components/card-kost";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,29 +8,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
 
 export default function Page() {
-  const images = [
-    "/1.jpeg",
-    "/2.jpeg",
-    "/3.jpeg",
-    "/4.jpeg",
-    "/5.jpeg",
-    "/6.jpeg",
-    "/7.jpeg",
-    "/8.jpeg",
-    "/9.jpeg",
-  ];
-
   return (
     <SidebarProvider>
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -39,36 +30,18 @@ export default function Page() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">INDEKOST</BreadcrumbLink>
+                <BreadcrumbLink href="#">
+                  Building Your Application
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>
-                  <Link href={"/dashboard"}>Beranda</Link>
-                </BreadcrumbPage>
+                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-
-        {/* Background utama (hero) */}
-        {/* Grid gambar lainnya */}
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            {images.map((src, idx) => (
-              <div
-                key={idx}
-                className="bg-muted/50 aspect-video rounded-xl overflow-hidden"
-              >
-                <img
-                  src={src}
-                  alt={`Image ${idx + 2}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <CardDemo />
       </SidebarInset>
     </SidebarProvider>
   );
