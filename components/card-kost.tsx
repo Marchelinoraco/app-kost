@@ -271,9 +271,6 @@ export function CardDemo() {
                 </div>
 
                 <CardFooter className="flex-col gap-2">
-                  <Button type="submit" className="w-full">
-                    Pesan Sekarang
-                  </Button>
                   <Button variant="outline" className="w-full">
                     Hubungi Pemilik
                   </Button>
