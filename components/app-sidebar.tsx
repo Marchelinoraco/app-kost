@@ -134,11 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <div className="p-1">
-          <SidebarOptInForm />
-        </div>
-      </SidebarContent>
+
       <div className="mb-20">
         <div className="ml-2 font-bold text-center underline">
           Kost Yang Paling Disukai

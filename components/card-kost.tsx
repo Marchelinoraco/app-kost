@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { tambahSuka } from "@/lib/firebaseAction"; // pastikan path sesuai
+import { tambahSuka } from "@/lib/firebaseAction";
+import Link from "next/link";
 
 interface KostCardProps {
   nama: string;
@@ -140,13 +140,22 @@ export function CardDemo() {
   const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
   const [filterJarakMax, setFilterJarakMax] = useState<number | null>(null);
   const [likedList, setLikedList] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleSuka = (nama: string) => {
-    if (!likedList.includes(nama)) {
+    if (likedList.includes(nama)) {
+      setLikedList((prev) => prev.filter((item) => item !== nama));
+    } else {
       tambahSuka(nama);
       setLikedList((prev) => [...prev, nama]);
     }
   };
+
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, [filterJenis, filterHargaMax, filterFasilitas, filterJarakMax]);
 
   const filteredKosts = kostList.filter((kost) => {
     const matchJenis = filterJenis
@@ -214,64 +223,84 @@ export function CardDemo() {
 
       {/* Kost Cards */}
       <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredKosts.map((kost, index) => {
-          const liked = likedList.includes(kost.nama);
+        {loading ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-10">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
+            <p className="text-lg font-medium text-gray-700">
+              Memuat data kost...
+            </p>
+          </div>
+        ) : filteredKosts.length > 0 ? (
+          filteredKosts.map((kost, index) => {
+            const liked = likedList.includes(kost.nama);
+            return (
+              <Card
+                key={index}
+                className="w-full max-w-sm bg-cover bg-center text-white"
+                style={{ backgroundImage: `url(${kost.imageSrc})` }}
+              >
+                <div className="bg-white/90 rounded-xl text-black py-4">
+                  <CardHeader>
+                    <CardTitle>{kost.nama}</CardTitle>
+                    <CardDescription className="mb-2">
+                      Tempat nyaman dan aman
+                    </CardDescription>
+                  </CardHeader>
 
-          return (
-            <Card
-              key={index}
-              className="w-full max-w-sm bg-cover bg-center text-white"
-              style={{ backgroundImage: `url(${kost.imageSrc})` }}
-            >
-              <div className="bg-white/90 rounded-xl text-black py-4">
-                <CardHeader>
-                  <CardTitle>{kost.nama}</CardTitle>
-                  <CardDescription className="mb-2">
-                    Tempat nyaman dan aman
-                  </CardDescription>
-                </CardHeader>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-44 rounded-t-xl overflow-hidden">
+                      <img
+                        src={kost.imageSrc}
+                        alt={kost.nama}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
 
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-full h-44 rounded-t-xl overflow-hidden">
-                    <img
-                      src={kost.imageSrc}
-                      alt={kost.nama}
-                      className="object-cover w-full h-full"
-                    />
+                    <h3 className="font-semibold text-base">{kost.nama}</h3>
+                    <p className="text-sm">Rp. {kost.harga.toLocaleString()}</p>
+                    <p className="text-sm text-gray-700">{kost.jenis}</p>
+                    <p className="text-sm text-gray-700">
+                      {kost.jarak} meter dari lokasi
+                    </p>
+                    <p className="text-sm text-gray-600 text-center px-2">
+                      {kost.fasilitas.join(", ")}
+                    </p>
+
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        variant={liked ? "default" : "outline"}
+                        className={`text-sm px-4 transition-colors duration-300 ${
+                          liked ? "bg-red-500 text-white hover:bg-red-600" : ""
+                        }`}
+                        onClick={() => handleSuka(kost.nama)}
+                      >
+                        {liked ? "❤️ Disukai" : "🤍 Suka"}
+                      </Button>
+                    </div>
                   </div>
 
-                  <h3 className="font-semibold text-base">{kost.nama}</h3>
-                  <p className="text-sm">Rp. {kost.harga.toLocaleString()}</p>
-                  <p className="text-sm text-gray-700">{kost.jenis}</p>
-                  <p className="text-sm text-gray-700">
-                    {kost.jarak} meter dari lokasi
-                  </p>
-                  <p className="text-sm text-gray-600 text-center px-2">
-                    {kost.fasilitas.join(", ")}
-                  </p>
-
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      variant={liked ? "default" : "outline"}
-                      className={`text-sm px-4 transition-colors duration-300 ${
-                        liked ? "bg-red-500 text-white hover:bg-red-600" : ""
-                      }`}
-                      onClick={() => handleSuka(kost.nama)}
-                    >
-                      {liked ? "❤️ Disukai" : "🤍 Suka"}
+                  <CardFooter className="flex-col gap-2">
+                    <Button variant="outline" className="w-full">
+                      Hubungi Pemilik
                     </Button>
-                  </div>
+                    <Link
+                      href={`/kost/${encodeURIComponent(kost.nama)}`}
+                      className="w-full"
+                    >
+                      <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                        Lihat Detail
+                      </Button>
+                    </Link>
+                  </CardFooter>
                 </div>
-
-                <CardFooter className="flex-col gap-2">
-                  <Button variant="outline" className="w-full">
-                    Hubungi Pemilik
-                  </Button>
-                </CardFooter>
-              </div>
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-10 text-gray-600">
+            Tidak ada kost yang sesuai filter.
+          </div>
+        )}
       </div>
     </div>
   );
