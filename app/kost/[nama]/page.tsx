@@ -1,89 +1,124 @@
-// app/kost/[nama]/page.tsx
+"use client";
 
-import { notFound } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { FaWhatsapp } from "react-icons/fa";
 
 interface KostDetail {
   nama: string;
-  harga: number;
   jenis: string;
-  fasilitas: string[];
+  harga: number;
+  fasilitas: string;
   jarak: number;
-  images: string[];
+  kontak?: string; // Nomor WhatsApp jika tersedia
 }
 
-const kostDetails: Record<string, KostDetail> = {
-  "Kost Genteng Biru": {
-    nama: "Kost Genteng Biru",
-    harga: 800000,
-    jenis: "Putri",
-    fasilitas: ["Wifi", "Kamar Mandi Dalam", "Listrik", "Dapur Bersama"],
-    jarak: 230,
-    images: ["/1.jpeg", "/1-mandi.jpeg", "/1-kasur.jpeg"],
-  },
-  "Kost Romancy": {
-    nama: "Kost Romancy",
-    harga: 1200000,
-    jenis: "Putri",
-    fasilitas: [
-      "Wifi",
-      "Meja Belajar",
-      "Meja Rias",
-      "Tempat Tidur",
-      "Lemari",
-      "Kamar Mandi Dalam",
-      "Kulkas Bersama",
-      "Dapur Bersama",
-      "AC",
-    ],
-    jarak: 230,
-    images: ["/4.jpeg", "/4-mandi.jpeg", "/4-kasur.jpeg"],
-  },
-  // Tambahkan kost lainnya sesuai kebutuhan...
-};
+export default function KostDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const [kost, setKost] = useState<KostDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function KostDetailPage({
-  params,
-}: {
-  params: { nama: string };
-}) {
-  const decodedNama = decodeURIComponent(params.nama);
-  const detail: KostDetail | undefined = kostDetails[decodedNama];
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        const nama = decodeURIComponent(params.nama as string);
+        const res = await axios.get("http://localhost:5001/detail-kost", {
+          params: { nama },
+        });
+        setKost(res.data.kost);
+      } catch (err) {
+        console.error("Gagal mengambil detail kost:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!detail) return notFound();
+    if (params.nama) fetchDetail();
+  }, [params.nama]);
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <Link
-        href="/dashboard"
-        className="text-blue-600 hover:underline text-sm inline-block mb-4"
+    <div className="max-w-6xl mx-auto p-6 ">
+      {/* ✅ Tombol Kembali */}
+      <button
+        onClick={() => router.push("/dashboard")}
+        className="mb-4 inline-block px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded transition"
       >
-        ← Kembali ke daftar kost
-      </Link>
+        ← Indekost
+      </button>
+      {loading ? (
+        <p className="text-center text-gray-500">Memuat detail kost...</p>
+      ) : kost ? (
+        <div className="bg-white rounded-lg shadow-xl p-6 border">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Gambar */}
+            <div className="space-y-4">
+              <img
+                src="/images/kamar.jpg"
+                alt="Kamar"
+                className="w-full h-64 object-cover rounded"
+              />
+              <img
+                src="/images/kamar-mandi.jpg"
+                alt="Kamar Mandi"
+                className="w-full h-64 object-cover rounded"
+              />
+              <img
+                src="/images/dapur.jpg"
+                alt="Dapur"
+                className="w-full h-64 object-cover rounded"
+              />
+            </div>
 
-      <h1 className="text-3xl font-bold mb-2">{detail.nama}</h1>
-      <p className="text-gray-700">Jenis: {detail.jenis}</p>
-      <p className="text-gray-700">Harga: Rp {detail.harga.toLocaleString()}</p>
-      <p className="text-gray-700">Jarak: {detail.jarak} meter</p>
-      <p className="text-gray-700">
-        Fasilitas:{" "}
-        <span className="font-medium">{detail.fasilitas.join(", ")}</span>
-      </p>
+            {/* Detail */}
+            <div className="space-y-4">
+              <h1 className="text-3xl font-bold text-gray-800">{kost.nama}</h1>
+              <p className="text-lg text-gray-700">Jenis: {kost.jenis}</p>
+              <p className="text-lg text-gray-700">
+                Harga:{" "}
+                <span className="font-semibold text-emerald-600">
+                  Rp{kost.harga.toLocaleString("id-ID")}
+                </span>
+              </p>
+              <p className="text-lg text-gray-700">Jarak: {kost.jarak} meter</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-        {detail.images.map((src, i) => (
-          <div key={i} className="rounded overflow-hidden shadow">
-            <Image
-              src={src}
-              alt={`Gambar ${i + 1}`}
-              width={600}
-              height={400}
-              className="object-cover w-full h-64"
-            />
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">Fasilitas:</p>
+                <ul className="list-disc list-inside text-gray-600">
+                  {kost.fasilitas.split(",").map((f, i) => (
+                    <li key={i}>{f.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Tombol WhatsApp */}
+              {kost.kontak ? (
+                <a
+                  href={`https://wa.me/${kost.kontak}?text=${encodeURIComponent(
+                    `Halo, saya tertarik dengan ${kost.nama}. Apakah masih tersedia?`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <button className="mt-4 flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">
+                    <FaWhatsapp />
+                    Hubungi via WhatsApp
+                  </button>
+                </a>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  Kontak belum tersedia
+                </p>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <p className="text-center text-red-500 font-medium">
+          Kost tidak ditemukan.
+        </p>
+      )}
     </div>
   );
 }

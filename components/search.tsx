@@ -11,6 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import Link from "next/link";
+import { tambahSuka } from "@/lib/firebaseAction";
 
 interface KostCardProps {
   nama: string;
@@ -26,6 +27,16 @@ export default function SearchKostPage() {
   const [results, setResults] = useState<KostCardProps[]>([]);
   const [originalResults, setOriginalResults] = useState<KostCardProps[]>([]);
   const [loading, setLoading] = useState(false);
+  const [likedList, setLikedList] = useState<string[]>([]);
+
+  const handleSuka = (nama: string) => {
+    if (likedList.includes(nama)) {
+      setLikedList((prev) => prev.filter((item) => item !== nama));
+    } else {
+      tambahSuka(nama);
+      setLikedList((prev) => [...prev, nama]);
+    }
+  };
 
   // Filter states
   const [filterJenis, setFilterJenis] = useState("");
@@ -116,7 +127,15 @@ export default function SearchKostPage() {
       return cocokJenis && cocokHarga && cocokJarak && cocokFasilitas;
     });
 
-    setResults(filtered);
+    // ⭐ Sort berdasarkan skor kemiripan, jika tersedia
+    const sorted = [...filtered].sort((a, b) => {
+      if (a.skor_kemiripan !== undefined && b.skor_kemiripan !== undefined) {
+        return b.skor_kemiripan - a.skor_kemiripan;
+      }
+      return 0; // kalau tidak ada skor, pertahankan urutan
+    });
+
+    setResults(sorted);
   }, [
     filterJenis,
     filterHargaMax,
@@ -128,7 +147,7 @@ export default function SearchKostPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Input Pencarian */}
-      <div className="flex gap-2 mx-[15%]">
+      <div className="flex gap-2 lg:mx-[15%]">
         <input
           className="flex-1 border p-2 rounded"
           placeholder="Contoh: kost murah dekat kampus, kost ac, kost perempuan"
@@ -219,49 +238,67 @@ export default function SearchKostPage() {
       {/* Hasil Pencarian */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {Array.isArray(results) && results.length > 0 ? (
-          results.map((kost, idx) => (
-            <Card
-              key={idx}
-              className="hover:shadow-lg transition-shadow duration-300 border border-gray-200"
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-primary">
-                  {kost.nama}
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  {kost.jenis} •{" "}
-                  <span className="font-semibold text-emerald-600">
-                    Rp{kost.harga.toLocaleString()}
-                  </span>
-                </CardDescription>
-              </CardHeader>
+          results.map((kost, idx) => {
+            const liked = likedList.includes(kost.nama); // ✅ CEK STATUS LIKE
 
-              <div className="px-6 py-2 text-sm space-y-1 text-gray-700">
-                <p>
-                  <span className="font-medium text-gray-500">Jarak:</span>{" "}
-                  {kost.jarak} meter
-                </p>
-                {kost.skor_kemiripan !== undefined && (
-                  <p>
-                    <span className="font-medium text-gray-500">
-                      Skor kemiripan:
-                    </span>{" "}
-                    <span className="text-blue-600 font-semibold">
-                      {kost.skor_kemiripan.toFixed(3)}
+            return (
+              <Card
+                key={idx}
+                className="hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-primary">
+                    {kost.nama}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    {kost.jenis} •{" "}
+                    <span className="font-semibold text-emerald-600">
+                      Rp{kost.harga.toLocaleString()}
                     </span>
-                  </p>
-                )}
-              </div>
+                  </CardDescription>
+                </CardHeader>
 
-              <CardFooter className="justify-end px-6 py-4">
-                <Link href="#">
-                  <Button size="sm" variant="outline">
-                    Lihat Detail
+                <div className="px-6 py-2 text-sm space-y-1 text-gray-700">
+                  <p>
+                    <span className="font-medium text-gray-500">Jarak:</span>{" "}
+                    {kost.jarak} meter dari delasal
+                  </p>
+
+                  {kost.skor_kemiripan !== undefined && (
+                    <p>
+                      <span className="font-medium text-gray-500">
+                        Skor kemiripan:
+                      </span>{" "}
+                      <span className="text-blue-600 font-semibold">
+                        {kost.skor_kemiripan.toFixed(3)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+
+                {/* ✅ Tombol Suka */}
+                <div className="flex gap-2 mt-2 px-6">
+                  <Button
+                    variant={liked ? "default" : "outline"}
+                    className={`text-sm px-4 transition-colors duration-300 ${
+                      liked ? "bg-red-500 text-white hover:bg-red-600" : ""
+                    }`}
+                    onClick={() => handleSuka(kost.nama)}
+                  >
+                    {liked ? "❤️ Disukai" : "🤍 Suka"}
                   </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))
+                </div>
+
+                <CardFooter className="justify-end px-6 py-2 ">
+                  <Link href={`/kost/${encodeURIComponent(kost.nama)}`}>
+                    <Button size="sm" variant="outline">
+                      Lihat Detail
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            );
+          })
         ) : (
           <div className="col-span-full text-center text-gray-500">
             Tidak ada hasil ditemukan.

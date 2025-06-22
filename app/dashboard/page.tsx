@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { CardDemo } from "@/components/card-kost";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,24 +21,44 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Selamat Datang</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Indekost</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">Selamat Datang</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Indekost</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+
+          {/* Breadcrumb kanan */}
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Breadcrumb>
+              <BreadcrumbList className="flex gap-10">
+                {" "}
+                {/* 👈 tambah gap di sini */}
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Beranda</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/riwayat">Riwayat</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
         </header>
+
         <SearchKost />
       </SidebarInset>
     </SidebarProvider>

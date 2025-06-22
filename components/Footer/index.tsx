@@ -110,7 +110,8 @@ const Footer = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            &copy; {new Date().getFullYear()} INDEKOST. All rights reserved.
+            &copy; {new Date().getFullYear()} Tania Resubun. All rights
+            reserved.
           </motion.p>
           <motion.div
             className="mt-3 md:mt-0 flex space-x-5"
