@@ -22,6 +22,7 @@ interface KostCardProps {
 }
 
 const kostList: KostCardProps[] = [
+  // ... Data kost tetap seperti sebelumnya
   {
     nama: "Kost Genteng Biru",
     jenis: "Putri",
@@ -135,6 +136,7 @@ const kostList: KostCardProps[] = [
 ];
 
 export function CardDemo() {
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterJenis, setFilterJenis] = useState("");
   const [filterHargaMax, setFilterHargaMax] = useState<number | null>(null);
   const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
@@ -150,6 +152,57 @@ export function CardDemo() {
       setLikedList((prev) => [...prev, nama]);
     }
   };
+
+  // ⬇️ Parse kalimat pencarian
+  useEffect(() => {
+    const parsed = searchQuery.toLowerCase();
+
+    // Reset semua filter dulu
+    setFilterJenis("");
+    setFilterHargaMax(null);
+    setFilterJarakMax(null);
+    setFilterFasilitas([]);
+
+    // 1. Jenis
+    if (parsed.includes("wanita") || parsed.includes("putri")) {
+      setFilterJenis("Putri");
+    } else if (parsed.includes("pria") || parsed.includes("putra")) {
+      setFilterJenis("Putra");
+    } else if (parsed.includes("campur")) {
+      setFilterJenis("Campur");
+    }
+
+    // 2. Harga
+    if (parsed.includes("murah")) {
+      setFilterHargaMax(800000); // kamu bisa sesuaikan nilai ini
+    } else if (parsed.includes("mahal")) {
+      setFilterHargaMax(1500000); // contoh harga tinggi
+    }
+
+    // 3. Jarak
+    if (parsed.includes("dekat kampus") || parsed.includes("dekat")) {
+      setFilterJarakMax(300); // misal: 300 meter adalah "dekat"
+    } else if (parsed.includes("jauh")) {
+      setFilterJarakMax(1000); // jika ada kata "jauh"
+    }
+
+    // 4. Fasilitas
+    const fasilitasDetected: string[] = [];
+    const fasilitasKunci = [
+      "ac",
+      "wifi",
+      "listrik",
+      "dapur",
+      "kamar mandi dalam",
+      "parkiran",
+    ];
+    fasilitasKunci.forEach((f) => {
+      if (parsed.includes(f)) {
+        fasilitasDetected.push(f.toLowerCase());
+      }
+    });
+    setFilterFasilitas(fasilitasDetected);
+  }, [searchQuery]);
 
   useEffect(() => {
     setLoading(true);
@@ -175,7 +228,16 @@ export function CardDemo() {
 
   return (
     <div className="space-y-6 p-4">
-      {/* Filter Form */}
+      {/* 🔍 Search Query */}
+      <input
+        type="text"
+        placeholder="Contoh: saya ingin kost dekat kampus, murah, AC"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="border p-2 rounded w-full"
+      />
+
+      {/* Filter Manual */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <select
           value={filterJenis}

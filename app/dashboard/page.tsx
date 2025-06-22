@@ -15,6 +15,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+import SearchKost from "@/components/search";
+
 export default function Page() {
   return (
     <SidebarProvider>
@@ -29,16 +31,16 @@ export default function Page() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Welcome</BreadcrumbLink>
+                <BreadcrumbLink href="#">Selamat Datang</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Rekomendasi Kost Untuk Kamu</BreadcrumbPage>
+                <BreadcrumbPage>Indekost</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <CardDemo />
+        <SearchKost />
       </SidebarInset>
     </SidebarProvider>
   );
