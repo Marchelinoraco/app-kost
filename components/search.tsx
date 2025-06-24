@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { tambahSuka } from "@/lib/firebaseAction";
+import { saveSearchResult } from "@/lib/firebaseAction";
 
 interface KostCardProps {
   nama: string;
@@ -28,6 +29,8 @@ export default function SearchKostPage() {
   const [originalResults, setOriginalResults] = useState<KostCardProps[]>([]);
   const [loading, setLoading] = useState(false);
   const [likedList, setLikedList] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+  const [hasil, setHasil] = useState([]);
 
   const handleSuka = (nama: string) => {
     if (likedList.includes(nama)) {
@@ -56,11 +59,20 @@ export default function SearchKostPage() {
     if (!searchQuery.trim()) return;
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5001/search", {
+      const res = await axios.get("http://localhost:5001/search-detail", {
         params: { q: searchQuery, jumlah: 6 },
       });
-      setOriginalResults(res.data.hasil);
-      setResults(res.data.hasil);
+      const hasil = res.data.hasil;
+      setOriginalResults(hasil);
+      setResults(hasil);
+
+      // Simpan ke Firestore
+      const simpan = await saveSearchResult(searchQuery, hasil);
+      if (simpan.success) {
+        console.log("✅ Disimpan di Firebase dengan ID:", simpan.id);
+      } else {
+        console.warn("⚠️ Gagal simpan:", simpan.error);
+      }
     } catch (error) {
       console.error("Gagal mencari:", error);
       setOriginalResults([]);
@@ -176,60 +188,6 @@ export default function SearchKostPage() {
             <option value="Campur">Campur</option>
           </select>
         </div>
-
-        {/* Harga Max */}
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-semibold text-gray-700">
-            Harga Max
-          </label>
-          <input
-            type="text"
-            placeholder="Contoh: 1.000.000"
-            value={hargaInput}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const numeric = raw.replace(/[^0-9]/g, "");
-              setHargaInput(formatRupiah(raw));
-              setFilterHargaMax(numeric ? Number(numeric) : null);
-            }}
-            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-        </div>
-
-        {/* Jarak Max */}
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-semibold text-gray-700">
-            Jarak Max (m)
-          </label>
-          <input
-            type="number"
-            placeholder="Contoh: 500"
-            onChange={(e) =>
-              setFilterJarakMax(e.target.value ? Number(e.target.value) : null)
-            }
-            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-        </div>
-
-        {/* Fasilitas */}
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-semibold text-gray-700">
-            Fasilitas
-          </label>
-          <input
-            type="text"
-            placeholder="Misal: AC, wifi"
-            onChange={(e) =>
-              setFilterFasilitas(
-                e.target.value
-                  .split(",")
-                  .map((f) => f.trim().toLowerCase())
-                  .filter((f) => f !== "")
-              )
-            }
-            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-        </div>
       </div>
 
       {/* Loading */}
@@ -260,8 +218,8 @@ export default function SearchKostPage() {
 
                 <div className="px-6 py-2 text-sm space-y-1 text-gray-700">
                   <p>
-                    <span className="font-medium text-gray-500">Jarak:</span>{" "}
-                    {kost.jarak} meter dari delasal
+                    <span className="font-medium text-gray-500"></span>{" "}
+                    {kost.jarak} meter dari Unika De La Salle Manado
                   </p>
 
                   {kost.skor_kemiripan !== undefined && (

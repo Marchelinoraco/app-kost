@@ -1,6 +1,38 @@
-import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  increment,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 import { db } from "./configFirebase";
+
+export type SearchRecord = {
+  query: string;
+  hasil: any[];
+  createdAt: ReturnType<typeof serverTimestamp>;
+};
+
+export async function saveSearchResult(
+  query: string,
+  hasil: any[]
+): Promise<{ success: boolean; id?: string; error?: any }> {
+  try {
+    const colRef = collection(db, "riwayat_pencarian");
+    const docRef = await addDoc(colRef, {
+      query,
+      hasil,
+      createdAt: serverTimestamp(), // penting supaya bisa di‐orderBy nanti
+    } as SearchRecord);
+    return { success: true, id: docRef.id };
+  } catch (err) {
+    console.error("saveSearchResult error:", err);
+    return { success: false, error: err };
+  }
+}
 
 export async function tambahSuka(kostNama: string) {
   const docRef = doc(db, "kost", kostNama); // koleksi 'kost' berdasarkan nama

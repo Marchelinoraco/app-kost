@@ -58,39 +58,6 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Image Grid */}
-        <section className="px-4 md:px-12 lg:px-24 py-8">
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {images.map((src, idx) => (
-              <div
-                key={idx}
-                className="overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-              >
-                <img
-                  src={src}
-                  alt={`Image ${idx + 1}`}
-                  className="w-full h-48 md:h-64 object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Deskripsi / Informasi */}
-        <section className="px-6 md:px-40 py-16 text-gray-800">
-          <p className="text-justify leading-relaxed text-base md:text-lg">
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Minima,
-            labore quaerat fuga repellendus magni delectus corporis, deleniti
-            culpa illum esse hic laudantium aut dolorum, voluptatem ex possimus
-            maiores optio nihil. Lorem, ipsum dolor sit amet consectetur
-            adipisicing elit. Qui nihil eius laudantium rerum culpa? Ullam dolor
-            modi esse neque, tempore quis reprehenderit pariatur voluptate, ad
-            ex minima dolore fugit earum! Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Mollitia obcaecati autem repellendus asperiores
-            expedita dolore sed, nostrum minus odit quae libero illo quaerat
-            placeat dicta cum, molestiae animi. Nihil, ducimus!
-          </p>
-        </section>
         <Footer />
       </SidebarInset>
     </SidebarProvider>
