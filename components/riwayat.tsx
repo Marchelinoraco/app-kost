@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchSearchHistory, RiwayatPencarian } from "@/lib/configFirebase";
+import Link from "next/link";
 
 export default function RiwayatPage() {
   const [history, setHistory] = useState<RiwayatPencarian[]>([]);
@@ -20,6 +21,14 @@ export default function RiwayatPage() {
 
   return (
     <div className="p-6">
+      <div className="flex my-2">
+        <Link
+          className=" border py-2 px-4 rounded-xl hover:bg-blue-600 hover:text-white duration-300"
+          href={"./dashboard"}
+        >
+          Kembali
+        </Link>
+      </div>
       <h2 className="text-xl font-semibold mb-4">📜 Riwayat Pencarian</h2>
       <div className="overflow-x-auto rounded border">
         <table className="w-full text-sm text-left border-collapse">

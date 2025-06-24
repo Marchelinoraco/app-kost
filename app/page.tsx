@@ -26,10 +26,9 @@ export default function Page() {
             SELAMAT DATANG
           </h1>
         </header> */}
-
         {/* Hero Section */}
         <section
-          className="relative flex flex-col items-center justify-center py-56 text-center bg-cover bg-center"
+          className="relative flex flex-col items-center justify-center py-[350px] text-center bg-cover bg-center"
           style={{
             backgroundImage: `url('/bg-kost.jpeg')`,
           }}
@@ -57,8 +56,6 @@ export default function Page() {
             </Link>
           </div>
         </section>
-
-        <Footer />
       </SidebarInset>
     </SidebarProvider>
   );
