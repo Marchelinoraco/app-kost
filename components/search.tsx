@@ -48,6 +48,8 @@ export default function SearchKostPage() {
   const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
   const [hargaInput, setHargaInput] = useState(""); // string input user
 
+  const [sortBy, setSortBy] = useState<"jarak" | "skor">("jarak");
+
   const formatRupiah = (angka: string) => {
     const cleaned = angka.replace(/[^0-9]/g, "");
     const number = Number(cleaned);
@@ -63,8 +65,9 @@ export default function SearchKostPage() {
         params: { q: searchQuery, jumlah: 6 },
       });
       const hasil = res.data.hasil;
-      setOriginalResults(hasil);
-      setResults(hasil);
+      const sortedByJarak = hasil.sort((a: any, b: any) => a.jarak - b.jarak);
+      setOriginalResults(sortedByJarak);
+      setResults(sortedByJarak);
 
       // Simpan ke Firestore
       const simpan = await saveSearchResult(searchQuery, hasil);
@@ -118,6 +121,24 @@ export default function SearchKostPage() {
     }
   };
 
+  const sortResults = (data: KostCardProps[], by: "jarak" | "skor") => {
+    let sorted = [...data];
+    if (by === "jarak") {
+      sorted.sort((a, b) => a.jarak - b.jarak);
+    } else {
+      sorted.sort((a, b) => (b.skor_kemiripan ?? 0) - (a.skor_kemiripan ?? 0));
+    }
+    setResults(sorted);
+  };
+
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  useEffect(() => {
+    sortResults(originalResults, sortBy);
+  }, [sortBy, originalResults]);
+
   // Apply manual filters
   useEffect(() => {
     const filtered = originalResults.filter((kost) => {
@@ -156,6 +177,10 @@ export default function SearchKostPage() {
     originalResults,
   ]);
 
+  useEffect(() => {
+    sortResults(originalResults, sortBy);
+  }, [sortBy, originalResults]);
+
   return (
     <div className="p-6 space-y-6">
       {/* Input Pencarian */}
@@ -186,6 +211,19 @@ export default function SearchKostPage() {
             <option value="">Semua Jenis</option>
             <option value="Putri">Kost Wanita</option>
             <option value="Campur">Campur</option>
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label className="mb-1 text-sm font-semibold text-gray-700">
+            Urutkan Berdasarkan:
+          </label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "jarak" | "skor")}
+            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          >
+            <option value="jarak">Jarak Terdekat</option>
+            <option value="skor">Skor Kemiripan</option>
           </select>
         </div>
       </div>
