@@ -11,8 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import Link from "next/link";
-import { tambahSuka } from "@/lib/firebaseAction";
-import { saveSearchResult } from "@/lib/firebaseAction";
+import { tambahSuka, saveSearchResult } from "@/lib/firebaseAction";
 
 interface KostCardProps {
   nama: string;
@@ -29,8 +28,19 @@ export default function SearchKostPage() {
   const [originalResults, setOriginalResults] = useState<KostCardProps[]>([]);
   const [loading, setLoading] = useState(false);
   const [likedList, setLikedList] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
-  const [hasil, setHasil] = useState([]);
+
+  const [filterJenis, setFilterJenis] = useState("");
+  const [filterHargaMax, setFilterHargaMax] = useState<number | null>(null);
+  const [filterJarakMax, setFilterJarakMax] = useState<number | null>(null);
+  const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
+  const [hargaInput, setHargaInput] = useState("");
+
+  const formatRupiah = (angka: string) => {
+    const cleaned = angka.replace(/[^0-9]/g, "");
+    const number = Number(cleaned);
+    if (isNaN(number)) return "";
+    return "Rp" + number.toLocaleString("id-ID");
+  };
 
   const handleSuka = (nama: string) => {
     if (likedList.includes(nama)) {
@@ -41,22 +51,6 @@ export default function SearchKostPage() {
     }
   };
 
-  // Filter states
-  const [filterJenis, setFilterJenis] = useState("");
-  const [filterHargaMax, setFilterHargaMax] = useState<number | null>(null);
-  const [filterJarakMax, setFilterJarakMax] = useState<number | null>(null);
-  const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
-  const [hargaInput, setHargaInput] = useState(""); // string input user
-
-  const [sortBy, setSortBy] = useState<"jarak" | "skor">("jarak");
-
-  const formatRupiah = (angka: string) => {
-    const cleaned = angka.replace(/[^0-9]/g, "");
-    const number = Number(cleaned);
-    if (isNaN(number)) return "";
-    return "Rp" + number.toLocaleString("id-ID");
-  };
-
   const doSearch = async () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
@@ -64,17 +58,24 @@ export default function SearchKostPage() {
       const res = await axios.get("http://localhost:5001/search-detail", {
         params: { q: searchQuery, jumlah: 6 },
       });
+
       const hasil = res.data.hasil;
-      const sortedByJarak = hasil.sort((a: any, b: any) => a.jarak - b.jarak);
+
+      const hasilDenganSkor = hasil.filter(
+        (item: any) =>
+          typeof item.skor_kemiripan === "number" && item.skor_kemiripan > 0
+      );
+
+      const sortedByJarak = [...hasilDenganSkor].sort(
+        (a, b) => a.jarak - b.jarak
+      );
+
       setOriginalResults(sortedByJarak);
       setResults(sortedByJarak);
 
-      // Simpan ke Firestore
-      const simpan = await saveSearchResult(searchQuery, hasil);
+      const simpan = await saveSearchResult(searchQuery, sortedByJarak);
       if (simpan.success) {
-        console.log("✅ Disimpan di Firebase dengan ID:", simpan.id);
-      } else {
-        console.warn("⚠️ Gagal simpan:", simpan.error);
+        console.log("✅ Disimpan di Firebase:", simpan.id);
       }
     } catch (error) {
       console.error("Gagal mencari:", error);
@@ -89,8 +90,9 @@ export default function SearchKostPage() {
     setLoading(true);
     try {
       const res = await axios.get("http://localhost:5001/semua-kost");
-      setOriginalResults(res.data.hasil);
-      setResults(res.data.hasil);
+      const sorted = res.data.hasil.sort((a: any, b: any) => a.jarak - b.jarak);
+      setOriginalResults(sorted);
+      setResults(sorted);
     } catch (error) {
       console.error("Gagal load semua:", error);
     } finally {
@@ -98,16 +100,13 @@ export default function SearchKostPage() {
     }
   };
 
-  useEffect(() => {
-    loadAll();
-  }, []);
-
   const loadAll2 = async () => {
     setLoading(true);
     try {
       const res = await axios.get("http://localhost:5001/semua-kost");
-      setOriginalResults(res.data.hasil);
-      setResults(res.data.hasil);
+      const sorted = res.data.hasil.sort((a: any, b: any) => a.jarak - b.jarak);
+      setOriginalResults(sorted);
+      setResults(sorted);
       setSearchQuery("");
       setHargaInput("");
       setFilterHargaMax(null);
@@ -121,54 +120,28 @@ export default function SearchKostPage() {
     }
   };
 
-  const sortResults = (data: KostCardProps[], by: "jarak" | "skor") => {
-    let sorted = [...data];
-    if (by === "jarak") {
-      sorted.sort((a, b) => a.jarak - b.jarak);
-    } else {
-      sorted.sort((a, b) => (b.skor_kemiripan ?? 0) - (a.skor_kemiripan ?? 0));
-    }
-    setResults(sorted);
-  };
-
   useEffect(() => {
     loadAll();
   }, []);
 
   useEffect(() => {
-    sortResults(originalResults, sortBy);
-  }, [sortBy, originalResults]);
-
-  // Apply manual filters
-  useEffect(() => {
     const filtered = originalResults.filter((kost) => {
       const cocokJenis =
         !filterJenis || kost.jenis.toLowerCase() === filterJenis.toLowerCase();
-
       const cocokHarga =
         filterHargaMax === null || kost.harga <= filterHargaMax;
-
       const cocokJarak =
         filterJarakMax === null || kost.jarak <= filterJarakMax;
-
       const cocokFasilitas =
         filterFasilitas.length === 0 ||
         filterFasilitas.every((f) =>
           kost.fasilitas.toString().toLowerCase().includes(f)
         );
-
       return cocokJenis && cocokHarga && cocokJarak && cocokFasilitas;
     });
 
-    // ⭐ Sort berdasarkan skor kemiripan, jika tersedia
-    const sorted = [...filtered].sort((a, b) => {
-      if (a.skor_kemiripan !== undefined && b.skor_kemiripan !== undefined) {
-        return b.skor_kemiripan - a.skor_kemiripan;
-      }
-      return 0; // kalau tidak ada skor, pertahankan urutan
-    });
-
-    setResults(sorted);
+    const sortedByJarak = [...filtered].sort((a, b) => a.jarak - b.jarak);
+    setResults(sortedByJarak);
   }, [
     filterJenis,
     filterHargaMax,
@@ -176,10 +149,6 @@ export default function SearchKostPage() {
     filterFasilitas,
     originalResults,
   ]);
-
-  useEffect(() => {
-    sortResults(originalResults, sortBy);
-  }, [sortBy, originalResults]);
 
   return (
     <div className="p-6 space-y-6">
@@ -197,37 +166,6 @@ export default function SearchKostPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 p-4 rounded-lg bg-white shadow-md">
-        {/* Jenis Kost */}
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-semibold text-gray-700">
-            Jenis Kost
-          </label>
-          <select
-            value={filterJenis}
-            onChange={(e) => setFilterJenis(e.target.value)}
-            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            <option value="">Semua Jenis</option>
-            <option value="Putri">Kost Wanita</option>
-            <option value="Campur">Campur</option>
-          </select>
-        </div>
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-semibold text-gray-700">
-            Urutkan Berdasarkan:
-          </label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "jarak" | "skor")}
-            className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            <option value="jarak">Jarak Terdekat</option>
-            <option value="skor">Skor Kemiripan</option>
-          </select>
-        </div>
-      </div>
-
       {/* Loading */}
       {loading && <p>Memuat data...</p>}
 
@@ -235,7 +173,7 @@ export default function SearchKostPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {Array.isArray(results) && results.length > 0 ? (
           results.map((kost, idx) => {
-            const liked = likedList.includes(kost.nama); // ✅ CEK STATUS LIKE
+            const liked = likedList.includes(kost.nama);
 
             return (
               <Card
@@ -255,10 +193,7 @@ export default function SearchKostPage() {
                 </CardHeader>
 
                 <div className="px-6 py-2 text-sm space-y-1 text-gray-700">
-                  <p>
-                    <span className="font-medium text-gray-500"></span>{" "}
-                    {kost.jarak} meter dari Unika De La Salle Manado
-                  </p>
+                  <p>{kost.jarak} meter dari Unika De La Salle Manado</p>
 
                   {kost.skor_kemiripan !== undefined && (
                     <p>
@@ -272,7 +207,6 @@ export default function SearchKostPage() {
                   )}
                 </div>
 
-                {/* ✅ Tombol Suka */}
                 <div className="flex gap-2 mt-2 px-6">
                   <Button
                     variant={liked ? "default" : "outline"}
