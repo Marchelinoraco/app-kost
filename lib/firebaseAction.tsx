@@ -16,21 +16,18 @@ export type SearchRecord = {
   createdAt: ReturnType<typeof serverTimestamp>;
 };
 
-export async function saveSearchResult(
-  query: string,
-  hasil: any[]
-): Promise<{ success: boolean; id?: string; error?: any }> {
+// lib/firebaseAction.ts
+export async function saveSearchResult(query: string, hasil: any[]) {
   try {
-    const colRef = collection(db, "riwayat_pencarian");
-    const docRef = await addDoc(colRef, {
+    const docRef = await addDoc(collection(db, "riwayat_pencarian"), {
       query,
       hasil,
-      createdAt: serverTimestamp(), // penting supaya bisa di‐orderBy nanti
-    } as SearchRecord);
+      createdAt: serverTimestamp(),
+    });
     return { success: true, id: docRef.id };
-  } catch (err) {
-    console.error("saveSearchResult error:", err);
-    return { success: false, error: err };
+  } catch (error) {
+    console.error("Gagal menyimpan ke Firebase:", error);
+    return { success: false };
   }
 }
 

@@ -35,13 +35,6 @@ export default function SearchKostPage() {
   const [filterFasilitas, setFilterFasilitas] = useState<string[]>([]);
   const [hargaInput, setHargaInput] = useState("");
 
-  const formatRupiah = (angka: string) => {
-    const cleaned = angka.replace(/[^0-9]/g, "");
-    const number = Number(cleaned);
-    if (isNaN(number)) return "";
-    return "Rp" + number.toLocaleString("id-ID");
-  };
-
   const handleSuka = (nama: string) => {
     if (likedList.includes(nama)) {
       setLikedList((prev) => prev.filter((item) => item !== nama));
@@ -61,19 +54,17 @@ export default function SearchKostPage() {
 
       const hasil = res.data.hasil;
 
-      const hasilDenganSkor = hasil.filter(
-        (item: any) =>
-          typeof item.skor_kemiripan === "number" && item.skor_kemiripan > 0
-      );
+      const hasilDenganSkor = hasil
+        .filter(
+          (item: any) =>
+            typeof item.skor_kemiripan === "number" && item.skor_kemiripan > 0
+        )
+        .sort((a: any, b: any) => b.skor_kemiripan - a.skor_kemiripan); // ⬅️ urut dari skor tertinggi
 
-      const sortedByJarak = [...hasilDenganSkor].sort(
-        (a, b) => a.jarak - b.jarak
-      );
+      setOriginalResults(hasilDenganSkor);
+      setResults(hasilDenganSkor);
 
-      setOriginalResults(sortedByJarak);
-      setResults(sortedByJarak);
-
-      const simpan = await saveSearchResult(searchQuery, sortedByJarak);
+      const simpan = await saveSearchResult(searchQuery, hasilDenganSkor);
       if (simpan.success) {
         console.log("✅ Disimpan di Firebase:", simpan.id);
       }
@@ -140,8 +131,7 @@ export default function SearchKostPage() {
       return cocokJenis && cocokHarga && cocokJarak && cocokFasilitas;
     });
 
-    const sortedByJarak = [...filtered].sort((a, b) => a.jarak - b.jarak);
-    setResults(sortedByJarak);
+    setResults(filtered);
   }, [
     filterJenis,
     filterHargaMax,
@@ -152,6 +142,21 @@ export default function SearchKostPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Modal Loading */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 shadow-xl animate-pulse w-[300px] text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-gray-700 font-medium">
+                Sedang mencari kost terbaik...
+              </p>
+              <p className="text-sm text-gray-400">Mohon tunggu sebentar</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Input Pencarian */}
       <div className="flex gap-2 lg:mx-[15%]">
         <input
@@ -166,11 +171,8 @@ export default function SearchKostPage() {
         </Button>
       </div>
 
-      {/* Loading */}
-      {loading && <p>Memuat data...</p>}
-
       {/* Hasil Pencarian */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-6 lg:mx-[200px]">
         {Array.isArray(results) && results.length > 0 ? (
           results.map((kost, idx) => {
             const liked = likedList.includes(kost.nama);
@@ -230,7 +232,7 @@ export default function SearchKostPage() {
             );
           })
         ) : (
-          <div className="col-span-full text-center text-gray-500">
+          <div className="text-center text-gray-500">
             Tidak ada hasil ditemukan.
           </div>
         )}
