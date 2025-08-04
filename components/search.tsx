@@ -195,7 +195,7 @@ export default function SearchKostPage() {
                 </CardHeader>
 
                 <div className="px-6 py-2 text-sm space-y-1 text-gray-700">
-                  <p>{kost.jarak} meter dari Unika De La Salle Manado</p>
+                  <p>{kost.jarak} meter dari Lokasi</p>
 
                   {kost.skor_kemiripan !== undefined && (
                     <p>

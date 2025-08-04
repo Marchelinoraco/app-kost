@@ -11,8 +11,37 @@ interface KostDetail {
   harga: number;
   fasilitas: string;
   jarak: number;
-  kontak?: string; // Nomor WhatsApp jika tersedia
+  kontak?: string;
 }
+
+// Mapping nama kost ke prefix nama file gambar
+const getImagePaths = (nama: string): string[] => {
+  const mapNamaToPrefix: Record<string, string> = {
+    "kost Anugerah": "anugerah",
+    "Kost Supit": "supit",
+    "Kost Budi Sejati": "budisejati",
+    "Kost Candi Borobudur": "borobudur",
+    "Genteng Biru": "gentengbiru",
+    "Genteng Merah": "gentengmerah",
+    "Kost Mulia I": "mulia",
+    // Tambahkan kost lain jika tersedia gambarnya
+  };
+
+  const prefix = mapNamaToPrefix[nama];
+  if (!prefix) {
+    return [
+      "/images/default1.jpeg",
+      "/images/default2.jpeg",
+      "/images/default3.jpeg",
+    ];
+  }
+
+  return [
+    `/images/${prefix}1.jpeg`,
+    `/images/${prefix}2.jpeg`,
+    `/images/${prefix}3.jpeg`,
+  ];
+};
 
 export default function KostDetailPage() {
   const params = useParams();
@@ -38,8 +67,10 @@ export default function KostDetailPage() {
     if (params.nama) fetchDetail();
   }, [params.nama]);
 
+  const images = kost ? getImagePaths(kost.nama) : [];
+
   return (
-    <div className="max-w-6xl mx-auto p-6 ">
+    <div className="max-w-6xl mx-auto p-6">
       {/* ✅ Tombol Kembali */}
       <button
         onClick={() => router.push("/dashboard")}
@@ -47,31 +78,25 @@ export default function KostDetailPage() {
       >
         ← Indekost
       </button>
+
       {loading ? (
         <p className="text-center text-gray-500">Memuat detail kost...</p>
       ) : kost ? (
         <div className="bg-white rounded-lg shadow-xl p-6 border">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Gambar */}
+            {/* Gambar Dinamis */}
             <div className="space-y-4">
-              <img
-                src="/images/kamar.jpg"
-                alt="Kamar"
-                className="w-full h-64 object-cover rounded"
-              />
-              <img
-                src="/images/kamar-mandi.jpg"
-                alt="Kamar Mandi"
-                className="w-full h-64 object-cover rounded"
-              />
-              <img
-                src="/images/dapur.jpg"
-                alt="Dapur"
-                className="w-full h-64 object-cover rounded"
-              />
+              {images.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Foto ${i + 1}`}
+                  className="w-full h-64 object-cover rounded"
+                />
+              ))}
             </div>
 
-            {/* Detail */}
+            {/* Detail Kost */}
             <div className="space-y-4">
               <h1 className="text-3xl font-bold text-gray-800">{kost.nama}</h1>
               <p className="text-lg text-gray-700">Jenis: {kost.jenis}</p>
